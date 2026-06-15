@@ -1,68 +1,7 @@
 -- =========================================================================
--- SYSTEM: Football Ticket Booking System Database Setup Template
--- DESCRIPTION: Pseudo-DDL Template for Table Creation & Data Insertion
--- INSTRUCTIONS: Replace 'TYPE' and the constraint placeholders with your own
---               actual data types, relational keys, and check criteria.
--- =========================================================================
-
--- DROP TABLES IF THEY ALREADY EXIST TO PREVENT CONFLICTS
-DROP TABLE IF EXISTS Bookings;
-DROP TABLE IF EXISTS Matches;
-DROP TABLE IF EXISTS Users;
-
--- =========================================================================
--- 1. CREATE USERS TABLE
--- =========================================================================
-CREATE TABLE Users (
-    user_id TYPE,
-    full_name TYPE,
-    email TYPE,
-    role TYPE,
-    phone_number TYPE,
-    
-    -- Write your constraint to make 'user_id' the Primary Key
-    -- Write your constraint to ensure 'email' values are never duplicated
-    -- Write your check constraint to restrict 'role' to specific allowed strings
-);
-
--- =========================================================================
--- 2. CREATE MATCHES TABLE
--- =========================================================================
-CREATE TABLE Matches (
-    match_id TYPE,
-    fixture TYPE,
-    tournament_category TYPE,
-    base_ticket_price TYPE,
-    match_status TYPE,
-    
-    -- Write your constraint to make 'match_id' the Primary Key
-    -- Write your check constraint to prevent negative ticket prices
-    -- Write your check constraint to restrict 'match_status' values
-);
-
--- =========================================================================
--- 3. CREATE BOOKINGS TABLE
--- =========================================================================
-CREATE TABLE Bookings (
-    booking_id TYPE,
-    user_id TYPE,
-    match_id TYPE,
-    seat_number TYPE,
-    payment_status TYPE,
-    total_cost TYPE,
-    
-    -- Write your constraint to make 'booking_id' the Primary Key
-    -- Write your Foreign Key constraint linking 'user_id' to the Users table
-    -- Write your Foreign Key constraint linking 'match_id' to the Matches table
-    -- Write your check constraint to ensure 'total_cost' is non-negative
-    -- Write your check constraint to restrict 'payment_status' values
-);
-
-
--- =========================================================================
 -- CREATE USERS TABLE
 -- =========================================================================
-CREATE TABLE users (
+CREATE TABLE Users (
     user_id serial PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -74,7 +13,7 @@ CREATE TABLE users (
 -- =========================================================================
 -- CREATE MATCHES TABLE
 -- =========================================================================
-CREATE TABLE matches (
+CREATE TABLE Matches (
     match_id INT PRIMARY KEY,
     fixture VARCHAR(255) NOT NULL,
     tournament_category VARCHAR(255) NOT NULL,
@@ -90,7 +29,7 @@ CREATE TABLE matches (
 -- =========================================================================
 -- CREATE BOOKINGS TABLE
 -- =========================================================================
-CREATE TABLE bookings (
+CREATE TABLE Bookings (
     booking_id INT PRIMARY KEY,
     user_id INT NOT NULL,
     match_id INT NOT NULL,
@@ -105,11 +44,11 @@ CREATE TABLE bookings (
 
     CONSTRAINT fk_user
         FOREIGN KEY (user_id)
-        REFERENCES users(user_id),
+        REFERENCES Users(user_id),
 
     CONSTRAINT fk_match
         FOREIGN KEY (match_id)
-        REFERENCES matches(match_id)
+        REFERENCES Matches(match_id)
 );
 
 
@@ -130,7 +69,7 @@ INSERT INTO Matches (match_id, fixture, tournament_category, base_ticket_price, 
 (102, 'Man City vs Liverpool', 'Premier League', 120.00, 'Selling Fast'),
 (103, 'Bayern Munich vs PSG', 'Champions League', 130.00, 'Available'),
 (104, 'AC Milan vs Inter Milan', 'Serie A', 90.00, 'Sold Out'),
-(105, 'Juventus vs Roma', 'Serie A', 80.00, 'Available');
+(105, 'Juventus vs Roma', 'Serie A', 80.00, 'Postponed');
 
 -- =========================================================================
 -- DATA SEEDING: INSERT SAMPLE DATA INTO BOOKINGS
@@ -140,7 +79,9 @@ INSERT INTO Bookings (booking_id, user_id, match_id, seat_number, payment_status
 (502, 1, 102, 'B-04', 'Confirmed', 120.00),
 (503, 2, 101, 'A-13', 'Confirmed', 150.00),
 (504, 2, 101, NULL, NULL, 150.00),
-(505, 3, 102, 'C-20', 'Pending', 120.00);
+(505, 3, 102, 'C-20', 'Pending', 120.00),
+(506, 3, 101, 'D-22', 'Cancelled', 120.00);
+
 
 -- =========================================================================
 -- QUERY-1:
@@ -148,7 +89,7 @@ INSERT INTO Bookings (booking_id, user_id, match_id, seat_number, payment_status
 select match_id,
        fixture,
        (base_ticket_price)
-from matches
+from Matches
 where tournament_category = 'Champions League'
   AND match_status = 'Available';
 
@@ -158,7 +99,7 @@ where tournament_category = 'Champions League'
 select user_id,
        full_name,
        email
-from users
+from Users
 where full_name ILIKE 'Tanvir%'
    OR full_name ILIKE '%Haque%';
 
@@ -170,7 +111,7 @@ select booking_id,
        match_id,
        COALESCE(payment_status, 'Action Required')
        as systematic_status
-from bookings
+from Bookings
 where payment_status IS NULL;
 
 -- =========================================================================
@@ -180,10 +121,10 @@ select b.booking_id,
        u.full_name,
        m.fixture,
        b.total_cost
-from bookings b
-inner join users u
+from Bookings b
+inner join Users u
     ON b.user_id = u.user_id
-inner join matches m
+inner join Matches m
     ON b.match_id = m.match_id;
 
 -- =========================================================================
@@ -192,8 +133,8 @@ inner join matches m
 select u.user_id,
        u.full_name,
        b.booking_id
-from users u
-left join bookings b
+from Users u
+left join Bookings b
     ON u.user_id = b.user_id
 order by u.user_id;
 
@@ -203,11 +144,11 @@ order by u.user_id;
 select booking_id,
        match_id,
        total_cost
-from bookings
+from Bookings
 where total_cost >
 (
     select avg(total_cost)
-    from bookings
+    from Bookings
 );
 
 -- =========================================================================
@@ -216,6 +157,5 @@ where total_cost >
 select match_id,
        fixture,
        base_ticket_price
-from matches
+from Matches
 order by base_ticket_price DESC limit 2 offset 1;
-
